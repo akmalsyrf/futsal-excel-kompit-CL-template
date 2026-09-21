@@ -1,0 +1,5 @@
+node_modules/
+output/
+*.xlsx
+!data/
+.DS_Store

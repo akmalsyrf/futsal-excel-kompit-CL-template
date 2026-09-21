@@ -1,0 +1,21 @@
+{
+  "name": "futsal-excel-kompit-cl-template",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate Kompit Futsal CL team roster Excel template with sheet protection and hardened validations",
+  "main": "generate.js",
+  "scripts": {
+    "generate": "node generate.js",
+    "generate:out": "node generate.js --out ./output/Template-Futsal-Kompit.xlsx"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akmalsyrf/futsal-excel-kompit-CL-template.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}
