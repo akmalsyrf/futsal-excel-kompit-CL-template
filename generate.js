@@ -3,8 +3,12 @@
  * Generate the Kompit Futsal team roster Excel template.
  *
  * Editable ranges (everything else is sheet-protected):
- *   - TEAM: D1:D4
- *   - PA / PI: A3:Q16
+ *   - TEAM: D1:D4 (Kompit) + G1:G2 (Campus League)
+ *   - PA / PI: A3:Q16 (Kompit) + R3:X16 (Campus League)
+ *
+ * Campus League (CL) additions are grouped under "CL_*" constants and
+ * "applyCl*" functions so Kompit's own columns stay untouched. CL cells share
+ * Kompit's styling.
  *
  * Usage:
  *   npm install
@@ -42,6 +46,63 @@ const COLORS = [
 
 const TIPE_OPTIONS = ['Athlete', 'Official', 'Coach', 'Manager'];
 const POSISI_OPTIONS = ['Goalkeeper', 'Pivot', 'Flank', 'Anchor', '-'];
+
+// ── Campus League additions ────────────────────────────────────────────────
+// Last column owned by Kompit on PA/PI (Q). CL columns start right after it.
+const KOMPIT_LAST_COL = 17;
+
+const CL_SPORT_OPTIONS = ['Futsal', 'Basketball', 'Badminton'];
+const CL_BPJSTK_LENGTH = 11;
+
+/**
+ * Extra roster columns CL needs to build User / UserAttribute records.
+ * Appended after Kompit's columns in this order (R..X). `sample` holds the
+ * example values for the Athlete (row 3) and Official (row 4) sample rows.
+ */
+const CL_ROSTER_COLUMNS = [
+  { header: 'Ukuran Baju', width: 16, sample: ['L', 'XL'] },
+  { header: 'Ukuran Celana', width: 16, sample: ['32', '34'] },
+  { header: 'Ukuran Sepatu', width: 16, sample: [42, 43] },
+  { header: 'Merk dan Type HP', width: 24, sample: ['Samsung Galaxy A54', 'iPhone 13'] },
+  { header: 'Nama Bank', width: 18, sample: ['BCA', 'Mandiri'] },
+  { header: 'Merk dan Type Kendaraan', width: 26, sample: ['Honda Beat', 'Toyota Avanza'] },
+  {
+    header: 'Nomor Kepesertaan BPJSTK',
+    width: 26,
+    sample: ['12345678901', '10987654321'],
+    text: true, // keep leading zeros
+  },
+];
+const CL_LAST_COL = KOMPIT_LAST_COL + CL_ROSTER_COLUMNS.length;
+
+/** Instructions appended to "Petunjuk Pengisian". */
+const CL_PETUNJUK_ROWS = [
+  ['Ukuran Baju / Ukuran Celana', 'Opsional. Boleh teks atau angka (contoh: XL, 32).'],
+  ['Ukuran Sepatu', 'Opsional. Angka 30–50 (contoh: 42).'],
+  ['Merk dan Type HP', 'Opsional. Contoh: Samsung Galaxy A54.'],
+  ['Nama Bank', 'Opsional. Nama bank rekening peserta (contoh: BCA).'],
+  ['Merk dan Type Kendaraan', 'Opsional. Contoh: Honda Beat.'],
+  [
+    'Nomor Kepesertaan BPJSTK',
+    `Nomor kepesertaan BPJS Ketenagakerjaan, ${CL_BPJSTK_LENGTH} digit angka. Diisi untuk Athlete dan Official yang sudah terdaftar.`,
+  ],
+  [
+    'Cabang Olahraga (sheet TEAM, G1)',
+    `Wajib. Cabang olahraga tim pada file ini (dropdown: ${CL_SPORT_OPTIONS.join(', ')}). Dipakai untuk membentuk kategori tim.`,
+  ],
+  [
+    'Region (sheet TEAM, G2)',
+    'Wilayah/region pertandingan tim (contoh: Yogyakarta). Jika kosong, ditentukan saat file diunggah di CMS Campus League.',
+  ],
+  [
+    'Kategori Tim (sheet TEAM, kolom H)',
+    'Terisi otomatis dari Cabang Olahraga + Abbreviation tim (contoh: Futsal Putra). Tidak perlu diisi manual.',
+  ],
+  [
+    'Catatan Campus League',
+    'Setiap tim (sheet PA / PI) wajib memiliki minimal satu baris dengan Tipe = Manager. Baris contoh (John Doe, Eric Cartman, Panjul, Manajer contoh) harus dihapus atau ditimpa sebelum diunggah.',
+  ],
+];
 
 const THIN_BORDER = {
   left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -296,8 +357,9 @@ function buildPetunjukSheet(wb) {
     ],
     [
       'Proteksi Sheet',
-      'Sheet terkunci. TEAM: hanya D1–D4 bisa diedit. PA & PI: hanya A3–Q16 bisa diedit. Sheet Wilayah adalah sumber dropdown (jangan diubah).',
+      'Sheet terkunci. TEAM: hanya D1–D4 dan G1–G2 bisa diedit. PA & PI: hanya A3–X16 bisa diedit. Sheet Wilayah adalah sumber dropdown (jangan diubah).',
     ],
+    ...CL_PETUNJUK_ROWS,
   ];
 
   rows.forEach((row, idx) => {
@@ -447,7 +509,62 @@ function buildTeamSheet(wb) {
     });
   }
 
+  applyClTeamFields(ws);
+
   return ws;
+}
+
+/**
+ * Campus League fields on TEAM:
+ *   - F1:G2  Cabang Olahraga / Region (G1:G2 editable) — needed to create the
+ *            Team record (sport + regional date) on the CL side.
+ *   - H6:H8  Kategori Tim, derived: "<Cabang Olahraga> Putra|Putri".
+ */
+function applyClTeamFields(ws) {
+  ws.getColumn(6).width = 20;
+  ws.getColumn(7).width = 22;
+
+  const fields = [
+    [1, 'Cabang Olahraga:', CL_SPORT_OPTIONS[0]],
+    [2, 'Region:', 'Yogyakarta'],
+  ];
+  fields.forEach(([row, label, value]) => {
+    const f = ws.getCell(`F${row}`);
+    const g = ws.getCell(`G${row}`);
+    f.value = label;
+    g.value = value;
+    f.font = { name: 'Calibri', color: { theme: 1 } };
+    g.font = { name: 'Calibri', color: { argb: 'FF000000' } };
+    lockCell(f, true);
+    lockCell(g, false);
+  });
+
+  addDataValidation(ws, 'G1', {
+    type: 'list',
+    formulae: [`"${CL_SPORT_OPTIONS.join(',')}"`],
+    promptTitle: 'Cabang Olahraga',
+    prompt: 'Pilih cabang olahraga tim pada file ini',
+    errorTitle: 'Cabang olahraga tidak valid',
+    error: 'Pilih dari dropdown.',
+  });
+
+  const header = ws.getCell('H6');
+  header.value = 'Kategori Tim';
+  header.font = { bold: true, name: 'Cambria', color: { theme: 1 } };
+  header.fill = FILL_HEADER_GRAY;
+  header.border = { ...THIN_BORDER };
+  header.alignment = { horizontal: 'center' };
+  lockCell(header, true);
+
+  for (const row of [7, 8]) {
+    const cell = ws.getCell(`H${row}`);
+    cell.value = {
+      formula: `IF($G$1="","",$G$1&" "&IF(RIGHT(D${row},2)="PI","Putri","Putra"))`,
+    };
+    cell.border = { ...THIN_BORDER };
+    cell.font = { name: 'Calibri', color: { argb: 'FF000000' } };
+    lockCell(cell, true);
+  }
 }
 
 function applyRosterHeaders(ws) {
@@ -778,14 +895,75 @@ function buildRosterSheet(wb, name) {
   applyRosterHeaders(ws);
   applySampleRows(ws);
   applyRosterValidations(ws);
+  applyClRosterColumns(ws);
 
-  // Keep header / empty row locked; only A3:Q16 is editable
-  for (let c = 1; c <= 17; c++) {
+  // Keep header / empty row locked; only A3:X16 is editable
+  for (let c = 1; c <= CL_LAST_COL; c++) {
     lockCell(ws.getCell(1, c), true);
     lockCell(ws.getCell(2, c), true);
   }
 
   return ws;
+}
+
+/**
+ * Campus League roster columns (R..X): header, widths, sample values,
+ * borders/unlock for the data rows and validations. Mirrors what Kompit's
+ * applyRosterHeaders / applySampleRows / applyRosterValidations do for A..Q.
+ */
+function applyClRosterColumns(ws) {
+  CL_ROSTER_COLUMNS.forEach((col, i) => {
+    const c = KOMPIT_LAST_COL + 1 + i;
+    const colLetter = ws.getColumn(c).letter;
+
+    const header = ws.getCell(2, c);
+    header.value = col.header;
+    header.font = { name: 'Cambria', bold: true, color: { theme: 1 }, size: 11 };
+    header.border = { ...THIN_BORDER };
+    ws.getColumn(c).width = col.width;
+
+    for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
+      const cell = ws.getCell(r, c);
+      cell.border = { ...THIN_BORDER };
+      cell.font = { name: 'Calibri', color: { theme: 1 } };
+      if (col.text) cell.numFmt = '@';
+      lockCell(cell, false);
+    }
+
+    // Sample values on the Athlete (row 3) and Official (row 4) example rows
+    ws.getCell(DATA_START_ROW, c).value = col.sample[0];
+    ws.getCell(DATA_START_ROW + 1, c).value = col.sample[1];
+
+    if (col.header === 'Ukuran Sepatu') {
+      for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
+        addDataValidation(ws, `${colLetter}${r}`, {
+          type: 'whole',
+          operator: 'between',
+          formulae: [30, 50],
+          promptTitle: 'Ukuran Sepatu',
+          prompt: 'Angka 30–50 (contoh: 42)',
+          errorTitle: 'Ukuran sepatu tidak valid',
+          error: 'Ukuran sepatu harus angka 30–50.',
+        });
+      }
+    }
+
+    if (col.header === 'Nomor Kepesertaan BPJSTK') {
+      for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
+        const ref = `${colLetter}${r}`;
+        addDataValidation(ws, ref, {
+          type: 'custom',
+          formulae: [
+            `OR(${ref}="",AND(LEN(${ref})=${CL_BPJSTK_LENGTH},ISNUMBER(VALUE(${ref})),ISERROR(FIND(" ",${ref})),ISERROR(FIND(".",${ref})),ISERROR(FIND(",",${ref})),ISERROR(FIND("-",${ref}))))`,
+          ],
+          promptTitle: 'Nomor Kepesertaan BPJSTK',
+          prompt: `${CL_BPJSTK_LENGTH} digit angka`,
+          errorTitle: 'Nomor BPJSTK tidak valid',
+          error: `Nomor kepesertaan BPJSTK harus ${CL_BPJSTK_LENGTH} digit angka tanpa spasi/huruf.`,
+        });
+      }
+    }
+  });
 }
 
 async function protectSheets(wb, password) {
@@ -847,8 +1025,8 @@ async function main() {
     console.log(`Usage: node generate.js [--out path.xlsx] [--password secret]
 
 Editable:
-  TEAM  D1:D4
-  PA/PI A3:Q16
+  TEAM  D1:D4, G1:G2
+  PA/PI A3:X16
 
 Default password: ${SHEET_PROTECT_PASSWORD}`);
     process.exit(0);
@@ -861,7 +1039,7 @@ Default password: ${SHEET_PROTECT_PASSWORD}`);
   const file = await generate(outPath, args.password);
   console.log(`Generated: ${file}`);
   console.log(`Sheet password: ${args.password}`);
-  console.log('Editable: TEAM!D1:D4 , PA/PI!A3:Q16');
+  console.log('Editable: TEAM!D1:D4 + G1:G2 , PA/PI!A3:X16');
 }
 
 main().catch((err) => {
