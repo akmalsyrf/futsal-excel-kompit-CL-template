@@ -60,16 +60,24 @@ const CL_BPJSTK_LENGTH = 11;
  * example values for the Athlete (row 3) and Official (row 4) sample rows.
  */
 const CL_ROSTER_COLUMNS = [
-  { header: 'Ukuran Baju', width: 16, sample: ['L', 'XL'] },
-  { header: 'Ukuran Celana', width: 16, sample: ['32', '34'] },
-  { header: 'Ukuran Sepatu', width: 16, sample: [42, 43] },
-  { header: 'Merk dan Type HP', width: 24, sample: ['Samsung Galaxy A54', 'iPhone 13'] },
-  { header: 'Nama Bank', width: 18, sample: ['BCA', 'Mandiri'] },
-  { header: 'Merk dan Type Kendaraan', width: 26, sample: ['Honda Beat', 'Toyota Avanza'] },
+  { header: 'Ukuran Baju', width: 16, sample: { PA: ['L', 'XL'], PI: ['M', 'S'] } },
+  { header: 'Ukuran Celana', width: 16, sample: { PA: ['32', '34'], PI: ['28', '27'] } },
+  { header: 'Ukuran Sepatu', width: 16, sample: { PA: [42, 43], PI: [38, 37] } },
+  {
+    header: 'Merk dan Type HP',
+    width: 24,
+    sample: { PA: ['Samsung Galaxy A54', 'iPhone 13'], PI: ['iPhone 14', 'Xiaomi Redmi Note 12'] },
+  },
+  { header: 'Nama Bank', width: 18, sample: { PA: ['BCA', 'Mandiri'], PI: ['BRI', 'BNI'] } },
+  {
+    header: 'Merk dan Type Kendaraan',
+    width: 26,
+    sample: { PA: ['Honda Beat', 'Toyota Avanza'], PI: ['Yamaha Mio', 'Honda Scoopy'] },
+  },
   {
     header: 'Nomor Kepesertaan BPJSTK',
     width: 26,
-    sample: ['12345678901', '10987654321'],
+    sample: { PA: ['12345678901', '10987654321'], PI: ['11223344556', '16543210987'] },
     text: true, // keep leading zeros
   },
 ];
@@ -100,7 +108,7 @@ const CL_PETUNJUK_ROWS = [
   ],
   [
     'Catatan Campus League',
-    'Setiap tim (sheet PA / PI) wajib memiliki minimal satu baris dengan Tipe = Manager. Baris contoh (John Doe, Eric Cartman, Panjul, Manajer contoh) harus dihapus atau ditimpa sebelum diunggah.',
+    'Setiap tim (sheet PA / PI) wajib memiliki minimal satu baris dengan Tipe = Manager. Baris contoh (Rizky Pratama, Budi Santoso, Hendra Gunawan, Agus Firmansyah / Aulia Rahma, Maya Kusumawati, Rina Wulandari, Fitri Handayani) harus dihapus atau ditimpa sebelum diunggah.',
   ],
 ];
 
@@ -316,7 +324,7 @@ function buildPetunjukSheet(wb) {
     ['Nama*', 'Nama lengkap. Wajib diisi.'],
     [
       'Email*',
-      'Alamat email yang valid (contoh: johndoe@mail.com). Wajib diisi dan tidak boleh duplikat.',
+      'Alamat email yang valid (contoh: rizky.pratama@student.ugm.ac.id). Wajib diisi dan tidak boleh duplikat.',
     ],
     [
       'No. WhatsApp*',
@@ -604,64 +612,66 @@ function applyRosterHeaders(ws) {
   }
 }
 
-function applySampleRows(ws) {
-  // Example roster rows so users see expected formats
-  const hyperlink = {
-    text: 'https://www.example-image.com',
-    hyperlink: 'https://www.example.com/',
+function photoHyperlink(slug) {
+  return {
+    text: `https://drive.google.com/file/d/${slug}/view`,
+    hyperlink: `https://www.example.com/foto/${slug}`,
   };
+}
 
-  const samples = [
+/** Realistic Indonesian sample rosters for Putra (PA) and Putri (PI). */
+const SAMPLE_ROSTERS = {
+  PA: [
     {
       row: 3,
       values: {
         A: 'Athlete',
-        B: 'John Doe',
-        C: hyperlink,
-        D: 'johndoe@mail.com',
-        E: '081234567890',
-        F: 10,
+        B: 'Rizky Pratama',
+        C: photoHyperlink('rizky-pratama'),
+        D: 'rizky.pratama@student.ugm.ac.id',
+        E: '081278345621',
+        F: 1,
         G: 'Goalkeeper',
-        H: 'Jakarta Selatan',
-        I: '12-01-2005',
-        J: '1234567890',
-        K: 'Teknik Informatika',
-        L: 2024,
-        M: 3.5,
-        N: 70,
-        O: 170,
-        P: 'john_doe',
-        Q: 'john_doe',
+        H: 'Yogyakarta',
+        I: '14-03-2004',
+        J: '2351507001',
+        K: 'Ilmu Keolahragaan',
+        L: 2023,
+        M: 3.42,
+        N: 72,
+        O: 178,
+        P: 'rizkypratama',
+        Q: 'rizkypratama',
       },
     },
     {
       row: 4,
       values: {
         A: 'Official',
-        B: 'Eric Cartman',
-        C: hyperlink,
-        D: 'ericcartman@mail.com',
-        E: '081234567891',
-        F: 9,
-        G: 'Pivot',
-        H: 'Jakarta Selatan',
-        I: '12-01-2006',
-        J: '1234567891',
-        K: 'Teknik Informatika',
+        B: 'Budi Santoso',
+        C: photoHyperlink('budi-santoso'),
+        D: 'budi.santoso@mail.ugm.ac.id',
+        E: '081356792084',
+        F: 99,
+        G: '-',
+        H: 'Sleman',
+        I: '22-08-2003',
+        J: '2251504012',
+        K: 'Manajemen',
         L: 2023,
-        M: 3.5,
-        N: 70,
-        O: 170,
-        P: 'john_doe',
-        Q: 'john_doe',
+        M: 3.28,
+        N: 68,
+        O: 172,
+        P: 'budisantoso',
+        Q: 'budisantoso',
       },
     },
     {
       row: 5,
       values: {
         A: 'Coach',
-        B: 'Panjul',
-        C: hyperlink,
+        B: 'Hendra Gunawan',
+        C: photoHyperlink('hendra-gunawan'),
         G: '-',
       },
     },
@@ -669,12 +679,81 @@ function applySampleRows(ws) {
       row: 6,
       values: {
         A: 'Manager',
-        B: 'Manajer contoh',
-        C: hyperlink,
+        B: 'Agus Firmansyah',
+        C: photoHyperlink('agus-firmansyah'),
         G: '-',
       },
     },
-  ];
+  ],
+  PI: [
+    {
+      row: 3,
+      values: {
+        A: 'Athlete',
+        B: 'Aulia Rahma',
+        C: photoHyperlink('aulia-rahma'),
+        D: 'aulia.rahma@student.ugm.ac.id',
+        E: '081245678913',
+        F: 10,
+        G: 'Flank',
+        H: 'Bantul',
+        I: '05-11-2005',
+        J: '2451508033',
+        K: 'Kedokteran',
+        L: 2024,
+        M: 3.67,
+        N: 55,
+        O: 163,
+        P: 'auliarahma',
+        Q: 'auliarahma',
+      },
+    },
+    {
+      row: 4,
+      values: {
+        A: 'Official',
+        B: 'Maya Kusumawati',
+        C: photoHyperlink('maya-kusumawati'),
+        D: 'maya.kusumawati@mail.ugm.ac.id',
+        E: '081389201456',
+        F: 99,
+        G: '-',
+        H: 'Yogyakarta',
+        I: '18-06-2004',
+        J: '2351502041',
+        K: 'Psikologi',
+        L: 2023,
+        M: 3.51,
+        N: 52,
+        O: 160,
+        P: 'mayakusuma',
+        Q: 'mayakusuma',
+      },
+    },
+    {
+      row: 5,
+      values: {
+        A: 'Coach',
+        B: 'Rina Wulandari',
+        C: photoHyperlink('rina-wulandari'),
+        G: '-',
+      },
+    },
+    {
+      row: 6,
+      values: {
+        A: 'Manager',
+        B: 'Fitri Handayani',
+        C: photoHyperlink('fitri-handayani'),
+        G: '-',
+      },
+    },
+  ],
+};
+
+function applySampleRows(ws, sheetName) {
+  // Example roster rows so users see expected formats
+  const samples = SAMPLE_ROSTERS[sheetName] || SAMPLE_ROSTERS.PA;
 
   samples.forEach(({ row, values }) => {
     Object.entries(values).forEach(([col, value]) => {
@@ -893,9 +972,9 @@ function buildRosterSheet(wb, name) {
   });
 
   applyRosterHeaders(ws);
-  applySampleRows(ws);
+  applySampleRows(ws, name);
   applyRosterValidations(ws);
-  applyClRosterColumns(ws);
+  applyClRosterColumns(ws, name);
 
   // Keep header / empty row locked; only A3:X16 is editable
   for (let c = 1; c <= CL_LAST_COL; c++) {
@@ -911,10 +990,13 @@ function buildRosterSheet(wb, name) {
  * borders/unlock for the data rows and validations. Mirrors what Kompit's
  * applyRosterHeaders / applySampleRows / applyRosterValidations do for A..Q.
  */
-function applyClRosterColumns(ws) {
+function applyClRosterColumns(ws, sheetName) {
+  const gender = SAMPLE_ROSTERS[sheetName] ? sheetName : 'PA';
+
   CL_ROSTER_COLUMNS.forEach((col, i) => {
     const c = KOMPIT_LAST_COL + 1 + i;
     const colLetter = ws.getColumn(c).letter;
+    const sample = col.sample[gender] || col.sample.PA;
 
     const header = ws.getCell(2, c);
     header.value = col.header;
@@ -931,8 +1013,8 @@ function applyClRosterColumns(ws) {
     }
 
     // Sample values on the Athlete (row 3) and Official (row 4) example rows
-    ws.getCell(DATA_START_ROW, c).value = col.sample[0];
-    ws.getCell(DATA_START_ROW + 1, c).value = col.sample[1];
+    ws.getCell(DATA_START_ROW, c).value = sample[0];
+    ws.getCell(DATA_START_ROW + 1, c).value = sample[1];
 
     if (col.header === 'Ukuran Sepatu') {
       for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
