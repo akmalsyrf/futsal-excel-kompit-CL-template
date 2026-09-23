@@ -3,7 +3,7 @@
  * Generate the Kompit Futsal team roster Excel template.
  *
  * Editable ranges (everything else is sheet-protected):
- *   - TEAM: D1:D4 (Kompit) + G1:G2 (Campus League)
+ *   - TEAM: D1:D4 (identitas) + G1:G2 (Campus League) + F8:I9 (Partisipasi & warna)
  *   - PA / PI: A3:Q16 (Kompit) + R3:X16 (Campus League)
  *
  * Campus League (CL) additions are grouped under "CL_*" constants and
@@ -103,8 +103,12 @@ const CL_PETUNJUK_ROWS = [
     'Wilayah/region pertandingan tim (contoh: Yogyakarta). Jika kosong, ditentukan saat file diunggah di CMS Campus League.',
   ],
   [
-    'Kategori Tim (sheet TEAM, kolom H)',
-    'Terisi otomatis dari Cabang Olahraga + Singkatan tim (contoh: Futsal Putra). Tidak perlu diisi manual.',
+    'Kategori Tim (sheet TEAM, kolom E)',
+    'Terisi otomatis dari Cabang Olahraga + jenis tim Putra/Putri (contoh: Futsal Putra). Tidak perlu diisi manual.',
+  ],
+  [
+    'Partisipasi (sheet TEAM, kolom F)',
+    'Opsional. TRUE jika tim ikut berpartisipasi, FALSE jika tidak. Default TRUE.',
   ],
   [
     'Catatan Campus League',
@@ -126,7 +130,8 @@ const FILL_HEADER_GRAY = {
   bgColor: { argb: 'FFD3D3D3' },
 };
 
-const FILL_HEADER_GG = {
+/** Auto/locked TEAM section (banner + formula columns). */
+const FILL_AUTO_GRAY = {
   type: 'pattern',
   pattern: 'solid',
   fgColor: { argb: 'FFCCCCCC' },
@@ -314,7 +319,7 @@ function buildPetunjukSheet(wb) {
     ['Kolom', 'Aturan & Format'],
     [
       'Sheet TEAM',
-      "Wajib diisi. Hanya sel D1–D4 yang bisa diedit. Kolom 'Singkatan' adalah kunci utama. Nama sheet pertandingan harus diawali dengan Singkatan tersebut. Provinsi & Kota wajib dari dropdown; daftar Kota menyesuaikan Provinsi yang dipilih.",
+      "Wajib diisi. Yang bisa diedit: D1–D4 (identitas), G1–G2 (Campus League), F8–I9 (Partisipasi & warna kostum). Sel abu-abu (No., Nama Tim, Singkatan, Kategori Tim) terisi otomatis dari rumus — jangan diubah. Provinsi & Kota wajib dari dropdown.",
     ],
     [
       'Nama Sheet',
@@ -369,7 +374,7 @@ function buildPetunjukSheet(wb) {
     ],
     [
       'Proteksi Sheet',
-      'Sheet terkunci. TEAM: hanya D1–D4 dan G1–G2 bisa diedit. PA & PI: hanya A3–X16 bisa diedit. Sheet Wilayah adalah sumber dropdown (jangan diubah).',
+      'Sheet terkunci. TEAM: D1–D4, G1–G2, dan F8–I9 bisa diedit. Sel abu-abu di tabel tim terkunci karena terisi rumus. PA & PI: hanya A3–X16 bisa diedit. Sheet Wilayah adalah sumber dropdown (jangan diubah).',
     ],
     ...CL_PETUNJUK_ROWS,
   ];
@@ -417,7 +422,11 @@ function buildTeamSheet(wb) {
   ws.getColumn(2).width = 7.14;
   ws.getColumn(3).width = 29.71;
   ws.getColumn(4).width = 34.71;
-  ws.getColumn(8).width = 17.57;
+  ws.getColumn(5).width = 17.57;
+  ws.getColumn(6).width = 14;
+  ws.getColumn(7).width = 19.43;
+  ws.getColumn(8).width = 19.43;
+  ws.getColumn(9).width = 19.43;
 
   const labels = [
     [1, 'Nama Universitas :', 'Universitas Gadjah Mada'],
@@ -437,14 +446,32 @@ function buildTeamSheet(wb) {
     lockCell(d, false);
   });
 
-  // Team table header row
+  // Banner: auto section notice (merged, locked, gray)
+  ws.mergeCells('B6:E6');
+  const banner = ws.getCell('B6');
+  banner.value = 'BAGIAN INI TIDAK PERLU DIISI KARENA OTOMATIS';
+  banner.font = { name: 'Calibri', color: { theme: 1 } };
+  banner.fill = FILL_AUTO_GRAY;
+  banner.border = { ...THIN_BORDER };
+  banner.alignment = { horizontal: 'center' };
+  lockCell(banner, true);
+  for (const addr of ['C6', 'D6', 'E6']) {
+    const cell = ws.getCell(addr);
+    cell.border = { ...THIN_BORDER };
+    lockCell(cell, true);
+  }
+
+  // Team table header row (row 7)
+  // Auto cols B–E + Partisipasi/Kostum Ketiga: CCCCCC; editable warna G–H: D3D3D3
   const headers = [
-    ['B6', 'No.', FILL_HEADER_GRAY, 'Cambria'],
-    ['C6', 'Nama Tim', FILL_HEADER_GRAY, 'Cambria'],
-    ['D6', 'Singkatan', FILL_HEADER_GRAY, 'Cambria'],
-    ['E6', 'Warna Kandang', FILL_HEADER_GRAY, 'Cambria'],
-    ['F6', 'Warna Tandang', FILL_HEADER_GRAY, 'Cambria'],
-    ['G6', 'Kostum Ketiga', FILL_HEADER_GG, 'Calibri'],
+    ['B7', 'No.', FILL_AUTO_GRAY, 'Cambria'],
+    ['C7', 'Nama Tim', FILL_AUTO_GRAY, 'Cambria'],
+    ['D7', 'Singkatan', FILL_AUTO_GRAY, 'Cambria'],
+    ['E7', 'Kategori Tim', FILL_AUTO_GRAY, 'Cambria'],
+    ['F7', 'Partisipasi', FILL_AUTO_GRAY, 'Calibri'],
+    ['G7', 'Warna Kandang', FILL_HEADER_GRAY, 'Cambria'],
+    ['H7', 'Warna Tandang', FILL_HEADER_GRAY, 'Cambria'],
+    ['I7', 'Kostum Ketiga', FILL_AUTO_GRAY, 'Calibri'],
   ];
   headers.forEach(([addr, text, fill, fontName]) => {
     const cell = ws.getCell(addr);
@@ -456,29 +483,45 @@ function buildTeamSheet(wb) {
     lockCell(cell, true);
   });
 
-  // Men's team row (Putra)
-  ws.getCell('B7').value = 1;
-  ws.getCell('C7').value = { formula: 'IF($D$1="", "", $D$1 & " Putra")' };
-  ws.getCell('D7').value = { formula: 'IF($D$4="", "", $D$4 & "PA")' };
-  ws.getCell('E7').value = 'PUTIH';
-  ws.getCell('F7').value = 'HITAM';
-  ws.getCell('G7').value = 'KUNING';
+  // Men's team row (Putra) — row 8
+  ws.getCell('B8').value = 1;
+  ws.getCell('C8').value = { formula: 'IF($D$1="", "", $D$1 & " Putra")' };
+  ws.getCell('D8').value = { formula: 'IF($D$4="", "", $D$4 & "PA")' };
+  ws.getCell('E8').value = {
+    formula: 'IF($G$1="","",$G$1&" "&IF(RIGHT(D8,2)="PI","Putri","Putra"))',
+  };
+  ws.getCell('F8').value = true;
+  ws.getCell('G8').value = 'PUTIH';
+  ws.getCell('H8').value = 'HITAM';
+  ws.getCell('I8').value = 'KUNING';
 
-  // Women's team row (Putri)
-  ws.getCell('B8').value = 2;
-  ws.getCell('C8').value = { formula: 'IF($D$1="", "", $D$1 & " Putri")' };
-  ws.getCell('D8').value = { formula: 'IF($D$4="", "", $D$4 & "PI")' };
-  ws.getCell('E8').value = 'BIRU';
-  ws.getCell('F8').value = 'ORANGE';
-  ws.getCell('G8').value = 'HIJAU';
+  // Women's team row (Putri) — row 9
+  ws.getCell('B9').value = 2;
+  ws.getCell('C9').value = { formula: 'IF($D$1="", "", $D$1 & " Putri")' };
+  ws.getCell('D9').value = { formula: 'IF($D$4="", "", $D$4 & "PI")' };
+  ws.getCell('E9').value = {
+    formula: 'IF($G$1="","",$G$1&" "&IF(RIGHT(D9,2)="PI","Putri","Putra"))',
+  };
+  ws.getCell('F9').value = true;
+  ws.getCell('G9').value = 'BIRU';
+  ws.getCell('H9').value = 'ORANGE';
+  ws.getCell('I9').value = 'HIJAU';
 
-  for (const row of [7, 8]) {
-    for (const col of ['B', 'C', 'D', 'E', 'F', 'G']) {
+  // B–E: auto/formula (gray + locked). F–I: editable (no gray fill).
+  for (const row of [8, 9]) {
+    for (const col of ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']) {
       const cell = ws.getCell(`${col}${row}`);
       cell.border = { ...THIN_BORDER };
       cell.font = { name: 'Calibri', color: { argb: 'FF000000' } };
       if (col === 'B') cell.alignment = { horizontal: 'right' };
-      lockCell(cell, true);
+
+      const isAutoCol = col === 'B' || col === 'C' || col === 'D' || col === 'E';
+      if (isAutoCol) {
+        cell.fill = FILL_AUTO_GRAY;
+        lockCell(cell, true);
+      } else {
+        lockCell(cell, false);
+      }
     }
   }
 
@@ -513,8 +556,19 @@ function buildTeamSheet(wb) {
     error: 'Gunakan 2–10 karakter huruf kapital/angka tanpa spasi.',
   });
 
+  for (const addr of ['F8', 'F9']) {
+    addDataValidation(ws, addr, {
+      type: 'list',
+      formulae: ['"TRUE,FALSE"'],
+      promptTitle: 'Partisipasi',
+      prompt: 'TRUE jika ikut, FALSE jika tidak',
+      errorTitle: 'Partisipasi tidak valid',
+      error: 'Pilih TRUE atau FALSE.',
+    });
+  }
+
   const colorList = `"${COLORS.join(',')}"`;
-  for (const addr of ['E7', 'E8', 'F7', 'F8', 'G7', 'G8']) {
+  for (const addr of ['G8', 'G9', 'H8', 'H9', 'I8', 'I9']) {
     addDataValidation(ws, addr, {
       type: 'list',
       formulae: [colorList],
@@ -528,13 +582,12 @@ function buildTeamSheet(wb) {
 
 /**
  * Campus League fields on TEAM:
- *   - F1:G2  Cabang Olahraga / Wilayah (G1:G2 editable) — needed to create the
- *            Team record (sport + regional date) on the CL side.
- *   - H6:H8  Kategori Tim, derived: "<Cabang Olahraga> Putra|Putri".
+ *   - F1:G2  Cabang Olahraga / Wilayah (G1:G2 editable)
+ * Kategori Tim lives in the main team table (E8:E9, formula-driven).
  */
 function applyClTeamFields(ws) {
-  ws.getColumn(6).width = 20;
-  ws.getColumn(7).width = 22;
+  ws.getColumn(6).width = Math.max(ws.getColumn(6).width || 0, 20);
+  ws.getColumn(7).width = Math.max(ws.getColumn(7).width || 0, 19.43);
 
   const fields = [
     [1, 'Cabang Olahraga:', CL_SPORT_OPTIONS[0]],
@@ -559,24 +612,6 @@ function applyClTeamFields(ws) {
     errorTitle: 'Cabang olahraga tidak valid',
     error: 'Pilih dari dropdown.',
   });
-
-  const header = ws.getCell('H6');
-  header.value = 'Kategori Tim';
-  header.font = { bold: true, name: 'Cambria', color: { theme: 1 } };
-  header.fill = FILL_HEADER_GRAY;
-  header.border = { ...THIN_BORDER };
-  header.alignment = { horizontal: 'center' };
-  lockCell(header, true);
-
-  for (const row of [7, 8]) {
-    const cell = ws.getCell(`H${row}`);
-    cell.value = {
-      formula: `IF($G$1="","",$G$1&" "&IF(RIGHT(D${row},2)="PI","Putri","Putra"))`,
-    };
-    cell.border = { ...THIN_BORDER };
-    cell.font = { name: 'Calibri', color: { argb: 'FF000000' } };
-    lockCell(cell, true);
-  }
 }
 
 function applyRosterHeaders(ws) {
@@ -1111,7 +1146,7 @@ async function main() {
     console.log(`Usage: node generate.js [--out path.xlsx] [--password secret]
 
 Editable:
-  TEAM  D1:D4, G1:G2
+  TEAM  D1:D4, G1:G2, F8:I9
   PA/PI A3:X16
 
 Default password: ${SHEET_PROTECT_PASSWORD}`);
@@ -1125,7 +1160,7 @@ Default password: ${SHEET_PROTECT_PASSWORD}`);
   const file = await generate(outPath, args.password);
   console.log(`Generated: ${file}`);
   console.log(`Sheet password: ${args.password}`);
-  console.log('Editable: TEAM!D1:D4 + G1:G2 , PA/PI!A3:X16');
+  console.log('Editable: TEAM!D1:D4 + G1:G2 + F8:I9 , PA/PI!A3:X16');
 }
 
 main().catch((err) => {
