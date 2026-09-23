@@ -10,8 +10,8 @@ Node.js generator for the Kompit Futsal CL team roster Excel template.
 - Indonesian province & cascading city dropdowns (via `FILTER` helper on `Wilayah`)
 - Hardened roster validations (WhatsApp phone, jersey number, NIM, IPK, enrollment year, etc.)
 - Campus League columns (grouped under `CL_*` / `applyCl*` in `generate.js`):
-  - **PA / PI** `R:X` — Ukuran Baju, Ukuran Celana, Ukuran Sepatu, Merk dan Type HP, Nama Bank, Merk dan Type Kendaraan, Nomor Kepesertaan BPJSTK
-  - **TEAM** `F1:G2` — Cabang Olahraga (dropdown) & Region; `H6:H8` — Kategori Tim (derived, e.g. `Futsal Putra`)
+  - **PA / PI** `R:X` — Ukuran Baju, Ukuran Celana, Ukuran Sepatu, Merk dan Tipe HP, Nama Bank, Merk dan Tipe Kendaraan, Nomor Kepesertaan BPJSTK
+  - **TEAM** `F1:G2` — Cabang Olahraga (dropdown) & Wilayah; `H6:H8` — Kategori Tim (derived, e.g. `Futsal Putra`)
 
 ## Requirements
 

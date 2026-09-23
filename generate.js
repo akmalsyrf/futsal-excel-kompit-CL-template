@@ -64,13 +64,13 @@ const CL_ROSTER_COLUMNS = [
   { header: 'Ukuran Celana', width: 16, sample: { PA: ['32', '34'], PI: ['28', '27'] } },
   { header: 'Ukuran Sepatu', width: 16, sample: { PA: [42, 43], PI: [38, 37] } },
   {
-    header: 'Merk dan Type HP',
+    header: 'Merk dan Tipe HP',
     width: 24,
     sample: { PA: ['Samsung Galaxy A54', 'iPhone 13'], PI: ['iPhone 14', 'Xiaomi Redmi Note 12'] },
   },
   { header: 'Nama Bank', width: 18, sample: { PA: ['BCA', 'Mandiri'], PI: ['BRI', 'BNI'] } },
   {
-    header: 'Merk dan Type Kendaraan',
+    header: 'Merk dan Tipe Kendaraan',
     width: 26,
     sample: { PA: ['Honda Beat', 'Toyota Avanza'], PI: ['Yamaha Mio', 'Honda Scoopy'] },
   },
@@ -87,9 +87,9 @@ const CL_LAST_COL = KOMPIT_LAST_COL + CL_ROSTER_COLUMNS.length;
 const CL_PETUNJUK_ROWS = [
   ['Ukuran Baju / Ukuran Celana', 'Opsional. Boleh teks atau angka (contoh: XL, 32).'],
   ['Ukuran Sepatu', 'Opsional. Angka 30–50 (contoh: 42).'],
-  ['Merk dan Type HP', 'Opsional. Contoh: Samsung Galaxy A54.'],
+  ['Merk dan Tipe HP', 'Opsional. Contoh: Samsung Galaxy A54.'],
   ['Nama Bank', 'Opsional. Nama bank rekening peserta (contoh: BCA).'],
-  ['Merk dan Type Kendaraan', 'Opsional. Contoh: Honda Beat.'],
+  ['Merk dan Tipe Kendaraan', 'Opsional. Contoh: Honda Beat.'],
   [
     'Nomor Kepesertaan BPJSTK',
     `Nomor kepesertaan BPJS Ketenagakerjaan, ${CL_BPJSTK_LENGTH} digit angka. Diisi untuk Athlete dan Official yang sudah terdaftar.`,
@@ -99,12 +99,12 @@ const CL_PETUNJUK_ROWS = [
     `Wajib. Cabang olahraga tim pada file ini (dropdown: ${CL_SPORT_OPTIONS.join(', ')}). Dipakai untuk membentuk kategori tim.`,
   ],
   [
-    'Region (sheet TEAM, G2)',
+    'Wilayah (sheet TEAM, G2)',
     'Wilayah/region pertandingan tim (contoh: Yogyakarta). Jika kosong, ditentukan saat file diunggah di CMS Campus League.',
   ],
   [
     'Kategori Tim (sheet TEAM, kolom H)',
-    'Terisi otomatis dari Cabang Olahraga + Abbreviation tim (contoh: Futsal Putra). Tidak perlu diisi manual.',
+    'Terisi otomatis dari Cabang Olahraga + Singkatan tim (contoh: Futsal Putra). Tidak perlu diisi manual.',
   ],
   [
     'Catatan Campus League',
@@ -265,7 +265,7 @@ function buildRefSheet(wb) {
   ws.getCell('D2').value = {
     formula: `IFERROR(FILTER(B2:B${dataLastRow},A2:A${dataLastRow}=TEAM!D3),"")`,
   };
-  ws.getCell('E1').value = '← auto from Province (TEAM!D3). Do not edit.';
+  ws.getCell('E1').value = '← otomatis dari Provinsi (TEAM!D3). Jangan diubah.';
   ws.getCell('E1').font = {
     italic: true,
     color: { argb: 'FF666666' },
@@ -314,14 +314,18 @@ function buildPetunjukSheet(wb) {
     ['Kolom', 'Aturan & Format'],
     [
       'Sheet TEAM',
-      "Wajib diisi. Hanya sel D1–D4 yang bisa diedit. Kolom 'Abbreviation' adalah kunci utama. Nama sheet pertandingan harus diawali dengan Abbreviation tersebut. Provinsi & Kota wajib dari dropdown; daftar Kota menyesuaikan Provinsi yang dipilih.",
+      "Wajib diisi. Hanya sel D1–D4 yang bisa diedit. Kolom 'Singkatan' adalah kunci utama. Nama sheet pertandingan harus diawali dengan Singkatan tersebut. Provinsi & Kota wajib dari dropdown; daftar Kota menyesuaikan Provinsi yang dipilih.",
     ],
     [
       'Nama Sheet',
-      'Format: [ABBR] PA (untuk tim Putra) atau [ABBR] PI (untuk tim Putri). Jika tanpa inisial maka dianggap tim Putra. Contoh: UGM PA.',
+      'Format: [SINGKATAN] PA (untuk tim Putra) atau [SINGKATAN] PI (untuk tim Putri). Jika tanpa inisial maka dianggap tim Putra. Contoh: UGM PA.',
     ],
     ['Tipe*', 'Pilih "Athlete", "Official", "Coach", atau "Manager" (dropdown). Wajib diisi.'],
     ['Nama*', 'Nama lengkap. Wajib diisi.'],
+    [
+      'Foto',
+      'URL foto peserta (http:// atau https://). Opsional.',
+    ],
     [
       'Email*',
       'Alamat email yang valid (contoh: rizky.pratama@student.ugm.ac.id). Wajib diisi dan tidak boleh duplikat.',
@@ -360,8 +364,8 @@ function buildPetunjukSheet(wb) {
       'Username Instagram. Hanya huruf, angka, titik (.), dan underscore (_). Maksimal 30 karakter. Wajib diisi untuk Athlete.',
     ],
     [
-      'Tiktok*',
-      'Username Tiktok. Hanya huruf, angka, titik (.), dan underscore (_). Maksimal 24 karakter. Wajib diisi untuk Athlete.',
+      'TikTok*',
+      'Username TikTok. Hanya huruf, angka, titik (.), dan underscore (_). Maksimal 24 karakter. Wajib diisi untuk Athlete.',
     ],
     [
       'Proteksi Sheet',
@@ -419,7 +423,7 @@ function buildTeamSheet(wb) {
     [1, 'Nama Universitas :', 'Universitas Gadjah Mada'],
     [2, 'Kota:', 'Yogyakarta'],
     [3, 'Provinsi:', 'DI Yogyakarta'],
-    [4, 'Abbreviation:', 'UGM'],
+    [4, 'Singkatan:', 'UGM'],
   ];
 
   labels.forEach(([row, label, value]) => {
@@ -436,11 +440,11 @@ function buildTeamSheet(wb) {
   // Team table header row
   const headers = [
     ['B6', 'No.', FILL_HEADER_GRAY, 'Cambria'],
-    ['C6', 'Nama Team', FILL_HEADER_GRAY, 'Cambria'],
-    ['D6', 'Abbreviation', FILL_HEADER_GRAY, 'Cambria'],
-    ['E6', 'Color Home', FILL_HEADER_GRAY, 'Cambria'],
-    ['F6', 'Color Away', FILL_HEADER_GRAY, 'Cambria'],
-    ['G6', 'Third Kit', FILL_HEADER_GG, 'Calibri'],
+    ['C6', 'Nama Tim', FILL_HEADER_GRAY, 'Cambria'],
+    ['D6', 'Singkatan', FILL_HEADER_GRAY, 'Cambria'],
+    ['E6', 'Warna Kandang', FILL_HEADER_GRAY, 'Cambria'],
+    ['F6', 'Warna Tandang', FILL_HEADER_GRAY, 'Cambria'],
+    ['G6', 'Kostum Ketiga', FILL_HEADER_GG, 'Calibri'],
   ];
   headers.forEach(([addr, text, fill, fontName]) => {
     const cell = ws.getCell(addr);
@@ -503,9 +507,9 @@ function buildTeamSheet(wb) {
     formulae: [
       'AND(LEN(D4)>=2,LEN(D4)<=10,EXACT(D4,UPPER(D4)),ISERROR(FIND(" ",D4)))',
     ],
-    promptTitle: 'Abbreviation',
+    promptTitle: 'Singkatan',
     prompt: '2–10 karakter, huruf kapital tanpa spasi (contoh: UGM)',
-    errorTitle: 'Abbreviation tidak valid',
+    errorTitle: 'Singkatan tidak valid',
     error: 'Gunakan 2–10 karakter huruf kapital/angka tanpa spasi.',
   });
 
@@ -524,7 +528,7 @@ function buildTeamSheet(wb) {
 
 /**
  * Campus League fields on TEAM:
- *   - F1:G2  Cabang Olahraga / Region (G1:G2 editable) — needed to create the
+ *   - F1:G2  Cabang Olahraga / Wilayah (G1:G2 editable) — needed to create the
  *            Team record (sport + regional date) on the CL side.
  *   - H6:H8  Kategori Tim, derived: "<Cabang Olahraga> Putra|Putri".
  */
@@ -534,7 +538,7 @@ function applyClTeamFields(ws) {
 
   const fields = [
     [1, 'Cabang Olahraga:', CL_SPORT_OPTIONS[0]],
-    [2, 'Region:', 'Yogyakarta'],
+    [2, 'Wilayah:', 'Yogyakarta'],
   ];
   fields.forEach(([row, label, value]) => {
     const f = ws.getCell(`F${row}`);
@@ -580,7 +584,7 @@ function applyRosterHeaders(ws) {
   const headers = [
     ['A2', requiredHeader('Tipe')],
     ['B2', requiredHeader('Nama')],
-    ['C2', 'Photo'],
+    ['C2', 'Foto'],
     ['D2', requiredHeader('Email')],
     ['E2', requiredHeader('No. WhatsApp')],
     ['F2', requiredHeader('No. Punggung')],
@@ -594,7 +598,7 @@ function applyRosterHeaders(ws) {
     ['N2', requiredHeader('Berat Badan')],
     ['O2', requiredHeader('Tinggi Badan (cm)')],
     ['P2', requiredHeader('Instagram')],
-    ['Q2', requiredHeader('Tiktok')],
+    ['Q2', requiredHeader('TikTok')],
   ];
 
   headers.forEach(([addr, value]) => {
@@ -809,10 +813,10 @@ function applyRosterValidations(ws) {
       formulae: [
         `OR(C${r}="",LEFT(C${r},7)="http://",LEFT(C${r},8)="https://")`,
       ],
-      promptTitle: 'Photo',
+      promptTitle: 'Foto',
       prompt: 'URL gambar (http:// atau https://)',
       errorTitle: 'URL tidak valid',
-      error: 'Photo harus berupa URL http:// atau https://',
+      error: 'Foto harus berupa URL http:// atau https://',
     });
 
     // Column D: email (Excel-compatible; avoid Google-only ISEMAIL)
@@ -957,9 +961,9 @@ function applyRosterValidations(ws) {
       formulae: [
         `OR(Q${r}="",AND(LEN(Q${r})>=1,LEN(Q${r})<=24,ISERROR(FIND(" ",Q${r})),ISERROR(FIND("@",Q${r}))))`,
       ],
-      promptTitle: 'Tiktok',
+      promptTitle: 'TikTok',
       prompt: 'Username tanpa @, maks 24 karakter',
-      errorTitle: 'Tiktok tidak valid',
+      errorTitle: 'TikTok tidak valid',
       error: 'Username tanpa spasi/@, maksimal 24 karakter.',
     });
   }
